@@ -10,5 +10,7 @@ Offical Implementation of Deep Learning Project: Target Sound Extraction with Di
 
 Part of the code is borrowed from the following repos.
 https://github.com/CompVis/stable-diffusion
+
 https://github.com/haoheliu/AudioLDM
+
 https://github.com/jik876/hifi-gan
