@@ -9,12 +9,14 @@ diffwrap:
 
   use_timbre_model: False
 
+  use_event_ppg: True
+
   unet:  
-    sample_size: [16, 256]
+    sample_size: [64, 400]
     in_channels: None
-    out_channels: 8
+    out_channels: 1
     layers_per_block: 2
-    block_out_channels: [128, 256, 384, 512]
+    block_out_channels: [128, 256, 512, 768]
     down_block_types: 
       ["DownBlock2D",
       "AttnDownBlock2D",

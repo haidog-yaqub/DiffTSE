@@ -9,7 +9,8 @@ from torch.utils.data import Dataset
 
 # training "average voice" encoder
 class TSEDataset(Dataset):
-    def __init__(self, data_dir, subset, sr=16000, length=10, use_timbre_feature=False, timbre_path=None):
+    def __init__(self, data_dir, subset, sr=16000, length=10, hop_size=160,
+                 use_timbre_feature=False, timbre_path=None, mel_length=1000):
         self.subset = subset
         self.path = data_dir
         meta = pd.read_csv(data_dir + 'meta.csv')
@@ -20,6 +21,10 @@ class TSEDataset(Dataset):
         if self.use_timbre_feature:
             assert timbre_path is not None
         self.timbre_path = timbre_path
+
+        self.length = length
+        self.hop_size = hop_size
+        self.mel_length = mel_length
         # random.seed(random_seed)
 
     def get_data(self, subfolder, audio_id):
@@ -68,10 +73,14 @@ class TSEDataset(Dataset):
         onset = min(max(onset-start/self.sr, 0), self.train_samples/self.sr)
         offset = max(0, min(offset-start/self.sr, self.train_samples/self.sr))
 
+        event_tensor = torch.zeros(self.mel_length)
+        event_tensor[int(onset*self.sr//self.hop_size):int(offset*self.sr//self.hop_size)+1] = 1
+
+
         if self.subset == 'train':
-            return mixture.squeeze(), timbre.squeeze(), target.squeeze(), onset, offset, cls, timbre_feature.squeeze()
+            return mixture.squeeze(), timbre.squeeze(), target.squeeze(), onset, offset, cls, timbre_feature.squeeze(), event_tensor
         else:
-            return mixture.squeeze(), timbre.squeeze(), target.squeeze(), onset, offset, cls, timbre_feature.squeeze(), file_id
+            return mixture.squeeze(), timbre.squeeze(), target.squeeze(), onset, offset, cls, timbre_feature.squeeze(), event_tensor, file_id
 
         # item = {'mixture': mixture, 'timbre': timbre, 'target': target,
         #         'onset': onset, 'offset': offset, 'cls': cls, 'timbre_feature': timbre_feature}

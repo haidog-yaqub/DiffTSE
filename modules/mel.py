@@ -6,7 +6,7 @@ import torchaudio.transforms as transforms
 
 class LogMelSpectrogram(torch.nn.Module):
     def __init__(self, sr=16000, frame_length=1024, hop_length=160, n_mel=64, f_min=0, f_max=8000,
-                 target_length=1024):
+                 mel_length=1024):
         super().__init__()
         self.frame_length = frame_length
         self.hop_length = hop_length
@@ -23,7 +23,7 @@ class LogMelSpectrogram(torch.nn.Module):
             f_min=f_min,
             f_max=f_max
         )
-        self.target_length=target_length
+        self.target_length = mel_length
 
     @torch.no_grad()
     def forward(self, x):

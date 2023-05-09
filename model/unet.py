@@ -34,13 +34,20 @@ class DiffTSE(nn.Module):
             else:
                 self.use_timbre_model = False
 
+            if self.config['use_event_ppg']:
+                self.use_event_ppg = True
+                self.ppg_model = nn.Sequential(nn.Linear(1, pre_hidden // 16), nn.SiLU(),
+                                               nn.Linear(pre_hidden // 16, pre_hidden // 16)
+                                               )
+                in_channel += pre_hidden//16
+
             config['unet']['in_channels'] = in_channel
             self.fusion = 'concat'
             self.unet = UNet2DModel(**self.config['unet'])
             self.unet.set_use_memory_efficient_attention_xformers(True)
             # self.unet.set_attn_processor(AttnProcessor2_0())
 
-    def forward(self, x, t, mixture, cls=None, timbre=None, timbre_feature=None):
+    def forward(self, x, t, mixture, cls=None, timbre=None, timbre_feature=None, event=None):
         timbre_all = []
 
         if self.use_timbre_feature:
@@ -56,6 +63,13 @@ class DiffTSE(nn.Module):
         else:
             x = torch.cat([x, mixture], dim=1)
 
+        if self.use_event_ppg:
+            event = event.unsqueeze(-1)
+            event = self.ppg_model(event)
+            event = torch.transpose(event, 1, 2).unsqueeze(2)
+            event = torch.cat(x.shape[2]*[event], 2)
+            x = torch.cat([x, event], dim=1)
+
         noise = self.unet(sample=x, timestep=t, class_labels=cls)['sample']
 
         return noise
@@ -68,14 +82,15 @@ if __name__ == "__main__":
 
     model = DiffTSE(config['diffwrap']).to(device)
 
-    x = torch.rand((1, 8, 16, 256)).to(device)
+    x = torch.rand((1, 1, 64, 400)).to(device)
     t = torch.randint(0, 1000, (1, )).long().to(device)
     cls = torch.randint(0, 41, (1,)).long().to(device)
 
-    mixture = torch.rand((1, 8, 16, 256)).to(device)
+    mixture = torch.rand((1, 1, 64, 400)).to(device)
     timbre = None
     timbre_feature = None
+    event = torch.rand(1, 400).to(device)
     # timbre = torch.rand(1, 64, 1000).to(device)
     # timbre_feature = torch.rand(1, 768).to(device)
 
-    y = model(x, t, mixture, cls, timbre, timbre_feature)
+    y = model(x, t, mixture, cls, timbre, timbre_feature, event)
