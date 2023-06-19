@@ -11,7 +11,7 @@ Offical Implementation of Deep Learning Project: Target Sound Extraction with Di
 
 ## Acknowledgements
 
-Part of the code is borrowed from the following repos.
+Parts of the code are borrowed from the following repos:
 
 https://github.com/CompVis/stable-diffusion
 
